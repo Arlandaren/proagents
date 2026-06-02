@@ -192,15 +192,15 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 examples:
-  python proagents.py list
-  python proagents.py list personas/engineering
-  python proagents.py search react
-  python proagents.py search react --name-only
-  python proagents.py install react-patterns --cursor
-  python proagents.py install code-reviewer --claude
-  python proagents.py install senior-fullstack --stdout >> CLAUDE.md
-  python proagents.py install ux-architect --windsurf
-  python proagents.py install animate --antigravity
+  ./proagents list
+  ./proagents list personas/engineering
+  ./proagents search react
+  ./proagents search react --name-only
+  ./proagents install react-patterns --cursor
+  ./proagents install code-reviewer --claude
+  ./proagents install senior-fullstack --stdout >> CLAUDE.md
+  ./proagents install ux-architect --windsurf
+  ./proagents install animate --antigravity
 """,
     )
     sub = parser.add_subparsers(dest="command", required=True)

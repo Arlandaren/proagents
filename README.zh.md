@@ -51,10 +51,10 @@
 git clone https://github.com/Arlandaren/proagents.git
 cd proagents
 
-python proagents.py list                                          # 查看所有领域
-python proagents.py search react                                  # 关键词搜索
-python proagents.py install react-patterns --cursor              # → .cursorrules
-python proagents.py install senior-fullstack --stdout >> CLAUDE.md
+./proagents list                                          # 查看所有领域
+./proagents search react                                  # 关键词搜索
+./proagents install react-patterns --cursor              # → .cursor/rules/
+./proagents install senior-fullstack --stdout >> CLAUDE.md
 ```
 
 无需 pip 安装，支持 Python 3.8+。
@@ -145,13 +145,13 @@ python proagents.py install senior-fullstack --stdout >> CLAUDE.md
 
 ```bash
 # Cursor
-python proagents.py install react-patterns --cursor
+./proagents install react-patterns --cursor
 
 # Claude Code
-python proagents.py install code-reviewer --stdout >> CLAUDE.md
+./proagents install code-reviewer --stdout >> CLAUDE.md
 
 # Windsurf / Zed / Trae
-python proagents.py install ux-architect --stdout
+./proagents install ux-architect --stdout
 ```
 
 ---

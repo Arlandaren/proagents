@@ -63,19 +63,19 @@ git clone https://github.com/Arlandaren/proagents.git
 cd proagents
 
 # List all domains and counts
-python proagents.py list
+./proagents list
 
 # Search by keyword
-python proagents.py search react
+./proagents search react
 
 # Install to Cursor (.cursorrules)
-python proagents.py install react-patterns --cursor
+./proagents install react-patterns --cursor
 
 # Install to Claude Code (CLAUDE.md)
-python proagents.py install senior-fullstack --stdout >> CLAUDE.md
+./proagents install senior-fullstack --stdout >> CLAUDE.md
 
 # Preview any prompt
-python proagents.py install ux-architect --stdout
+./proagents install ux-architect --info
 ```
 
 No pip installs. Works on Python 3.8+.
@@ -197,7 +197,7 @@ The `rules/` directory is the most impactful single folder. It shapes *how* the 
 ### Cursor
 ```bash
 # Install a workflow as .cursorrules
-python proagents.py install react-patterns --cursor
+./proagents install react-patterns --cursor
 
 # Or reference specific rules in Cursor Settings → Rules for AI
 cat rules/taste/animate.md
@@ -206,22 +206,22 @@ cat rules/taste/animate.md
 ### Claude Code
 ```bash
 # Append any persona to CLAUDE.md
-python proagents.py install code-reviewer --stdout >> CLAUDE.md
+./proagents install code-reviewer --stdout >> CLAUDE.md
 
 # Load a taste rule for visual work
-python proagents.py install brand --stdout >> CLAUDE.md
+./proagents install brand --stdout >> CLAUDE.md
 ```
 
 ### Windsurf / Zed / Trae
 ```bash
 # Output to stdout and paste into system instructions
-python proagents.py install ux-architect --stdout
+./proagents install ux-architect --stdout
 ```
 
 ### Gemini CLI
 ```bash
 # Install a skill file to ~/.gemini/extensions/
-python proagents.py install senior-fullstack --target ~/.gemini/extensions/proagents/SKILL.md
+./proagents install senior-fullstack --target ~/.gemini/extensions/proagents/SKILL.md
 ```
 
 ---

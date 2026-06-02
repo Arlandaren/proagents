@@ -51,10 +51,10 @@
 git clone https://github.com/Arlandaren/proagents.git
 cd proagents
 
-python proagents.py list                                          # список доменов
-python proagents.py search react                                  # поиск по ключевому слову
-python proagents.py install react-patterns --cursor              # → .cursorrules
-python proagents.py install senior-fullstack --stdout >> CLAUDE.md
+./proagents list                                          # список доменов
+./proagents search react                                  # поиск по ключевому слову
+./proagents install react-patterns --cursor              # → .cursor/rules/
+./proagents install senior-fullstack --stdout >> CLAUDE.md
 ```
 
 ---
@@ -143,13 +143,13 @@ Legal tech, академия, финансы, XR, и другие узкие н�
 
 ```bash
 # Cursor
-python proagents.py install react-patterns --cursor
+./proagents install react-patterns --cursor
 
 # Claude Code
-python proagents.py install code-reviewer --stdout >> CLAUDE.md
+./proagents install code-reviewer --stdout >> CLAUDE.md
 
 # Windsurf / Zed / Trae
-python proagents.py install ux-architect --stdout
+./proagents install ux-architect --stdout
 ```
 
 ---
