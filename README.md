@@ -3,6 +3,10 @@
 </p>
 
 <p align="center">
+  <b>English</b> | <a href="README.ru.md">Русский</a> | <a href="README.zh.md">简体中文</a>
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/License-MIT%20%2F%20Apache%202.0-blue.svg" alt="License">
   <img src="https://img.shields.io/badge/Python-3.8%2B-blue" alt="Python Version">
   <img src="https://img.shields.io/badge/Prompts-770%2B-violet" alt="Total Prompts">
@@ -11,113 +15,93 @@
 
 ---
 
-**proagents** is a clean, domain-organized library of **770+ professional system personas and execution workflows** for AI-assisted development. Consolidated from top-performing agent frameworks, it is built to eliminate generic LLM outputs ("AI slop") and inject rich, production-grade coding standards, visual aesthetics, and compliance checks directly into your workspace.
+**proagents** is a curated, prefix-free library of **770+ professional system prompts and task workflows** for AI-assisted development (Cursor, Claude Code, Windsurf, Zed, and custom LLM agents). Meticulously structured into functional domains, this library is built to replace generic, low-quality LLM generations ("AI slop") with production-grade engineering, visual excellence, and strict compliance.
 
 ---
 
-## ⚡ Highlights
+## ⚡ The "Aha!" Moment: Standard LLM vs. proagents
 
-* **Zero Hype, Pure Prompting**: No heavy packages, node wrappers, or telemetry scripts. Just high-quality, instruction-rich markdown.
-* **CLI-Driven Setup**: An interactive, zero-dependency Python script to search and install rules into `.cursorrules` or `.claude/` in a single command.
-* **Functional Domain Layout**: Sanitized file naming, free of vendor-specific prefixes (`ecc-`, `agency-`, etc.), organized strictly by domain.
-* **Tuned for Visual Taste**: Includes 40+ dedicated rules for HSL tailored colors, premium typography, custom micro-animations, and glassmorphism, completely replacing default unstyled outputs.
+Most LLMs write generic, functional code that looks like a basic tutorial. **proagents** forces the model to act as a senior specialist with strict rules.
+
+| Metric / Aspect | Standard AI Output ❌ | proagents Enhanced Output |
+| :--- | :--- | :--- |
+| **UI Aesthetics** | Generic blue/gray Tailwind buttons, raw layout, standard boring fonts. | Curated HSL palettes, smooth micro-animations, glassmorphism, modern custom typography. |
+| **Code Safety** | Hardcoded secrets, missing error states, skipped edge cases. | Zero hardcoding, strict validation rules, robust try-catch with specific errors. |
+| **Logic & Testing** | "Write the code first, maybe test it later." | Injected TDD cycles, clean folder separation, explicit interface contracts. |
+| **Aero/Performance** | Heavy re-renders, unoptimized media assets. | Precise DOM operations, spring physics, LCP optimizations. |
 
 ---
 
-## 🛠️ The proagents CLI Tool
+## 🛠️ Interactive Workspace CLI
 
-We include `proagents.py`, a lightweight Python utility to manage prompts locally.
-
-### Usage
+Instead of manually browsing through hundreds of files, use the zero-dependency CLI manager `proagents.py` to search and install rules straight into your workspace.
 
 ```bash
-# List all categories and counts of personas/workflows
-python proagents.py list
-
-# List all personas in engineering
-python proagents.py list personas/engineering
-
-# Search for any prompt containing a keyword (e.g. "react")
+# 1. Search for a domain or technology (e.g. React)
 python proagents.py search react
 
-# Install a workflow straight to your local .cursorrules file
+# 2. Get info and metadata on a specific rule
+python proagents.py install react-patterns --info
+
+# 3. Install it directly into Cursor rules configuration
 python proagents.py install react-patterns --cursor
 
-# Copy a persona to a custom file location
-python proagents.py install ux-architect --target .claude/skills/ux-architect.md
-
-# View description and metadata of a rule
-python proagents.py install launch-strategy --info
+# 4. Or output it to stdout to append to CLAUDE.md
+python proagents.py install production-deployment --stdout >> CLAUDE.md
 ```
 
 ---
 
-## 📂 Repository Anatomy
+## 📂 Registry Taxonomy
 
-The repository is structured into four main directories:
+The library is organized into four main functional blocks to prevent project bloat:
 
 ```
 proagents/
 ├── proagents.py                # Zero-dependency CLI manager
-├── rules/                      # System-wide constraints & guidelines
-│   ├── core/                   # Code hygiene, git limits, and clean logic
-│   └── taste/                  # Visual guidelines, color theory, & UI aesthetics
-├── personas/                   # System instructions defining specific roles
-│   ├── engineering/            # Smart contract engineers, game scripters, etc.
-│   ├── design/                 # UX architects, brand guardians, motion artists
-│   ├── operations/             # Release managers, code reviewers, scrum masters
-│   ├── business-strategy/      # GTM planners, YC mentors, pitch evaluators
-│   └── specialized/            # Domain experts (legal tech, finance, translators)
-├── workflows/                  # Detailed execution checklists
-│   ├── development/            # TDD loops, deployment, launch checklists
-│   ├── qa-testing/             # WCAG accessibility audits, user flows
-│   ├── security-compliance/    # OWASP threat modeling, SOC2 audits
-│   └── business-ops/           # GitHub triage, operations, reporting
-└── templates/                  # Reusable ADRs, templates, and specs
+├── rules/                      # Global constraints & styling tokens
+│   ├── core/                   # Code hygiene, git compliance, error handling
+│   └── taste/                  # HSL color theory, custom motion, and layout grids
+├── personas/                   # System instructions for specialized roles
+│   ├── engineering/            # Metal renderer, Unity multiplayer, Solidity dev, SRE
+│   ├── design/                 # UX researcher, brand guardian, motion designer
+│   ├── operations/             # Code auditor, release manager, scrum master
+│   ├── business-strategy/      # GTM planner, proposal strategist, YC coach
+│   └── specialized/            # Legal billing, translation, finance trackers
+├── workflows/                  # Step-by-step execution checklists
+│   ├── development/            # TDD cycles, deployment guides, launch routines
+│   ├── qa-testing/             # WCAG audits, responsive validation, end-to-end flows
+│   ├── security-compliance/    # OWASP threat modeling, Dependabot config, SOC2 audits
+│   └── business-ops/           # GitHub issue triage, operations reports
+└── templates/                  # Reusable layouts, specs, and ADR structures
 ```
 
 ---
 
-## 🎨 Domain & Agent Coverage
+## ⚙️ How to Integrate
 
-Here is the breakdown of the **770+ agents and checklists** included:
-
-### 1. Rules & Visual Taste (`rules/`)
-* **Core Rules**: Clean styling guidelines, explicit over implicit declarations, config schema limits.
-* **Taste Rules**: Eliminates vanilla colors. Enforces Inter/Outfit/Roboto typography, smooth gradients, HSL tailored color schemes, frame-perfect micro-animations, and CSS layout grids.
-
-### 2. Specialized Personas (`personas/`)
-* **Engineering**: Includes native 3D rendering (`macos-spatial-metal-engineer`), specialized gaming engines (`godot-multiplayer-engineer`, `unity-architect`), Web3 smart contracts (`solidity-smart-contract-engineer`), and infrastructure (`sre-site-reliability-engineer`).
-* **Design & UX**: Focuses on UI/UX excellence (`ui-designer`, `ux-researcher`), brand voice protection (`brand-guardian`), and animation specialists.
-* **Operations & QA**: Practical roles for code audits (`code-reviewer`), task prioritization (`sprint-prioritizer`), and CI/CD triage.
-* **Business Strategy**: Presales planners (`proposal-strategist`), target market analysts (`trend-researcher`), and growth engineers.
-
-### 3. Systematic Workflows (`workflows/`)
-* **Development Playbooks**: Comprehensive checklists for `launch-strategy`, TDD routines, local container deployment, and performance optimization.
-* **Security & Compliance**: Outlines setups for OWASP audits, Dependabot security monitoring, HIPAA / SOC2 checks, and secret scanning.
-* **QA & Testing**: Outlines WCAG accessibility audits, responsive design verification, and playwright-driven user flows.
-
----
-
-## 🚀 IDE Integration Guide
-
-### Cursor (`.cursorrules`)
-To load a proagents prompt as a permanent instruction template for Cursor:
+### 🎯 Cursor
+Install any pattern directly to the root of your project:
 ```bash
 python proagents.py install react-patterns --cursor
 ```
+This generates a `.cursorrules` file containing exact instructions for Cursor.
 
-### Claude Code (`CLAUDE.md`)
-Append specific workflows to your `CLAUDE.md` to keep Claude Code aligned with testing and style constraints:
+### 🤖 Claude Code
+Load a specific persona or release checklist directly into your project's `CLAUDE.md`:
 ```bash
 python proagents.py install launch-strategy --stdout >> CLAUDE.md
 ```
 
-### Zed / Windsurf / Trae
-Copy the contents of the relevant markdown file inside `personas/` or `workflows/` and paste them into the system prompt configuration or custom instructions settings under your editor configurations.
+### 💻 Zed / Windsurf / Trae
+View any prompt and paste it into your editor's system instruction preferences:
+```bash
+python proagents.py install ux-architect --stdout
+```
 
 ---
 
-## ⚖️ License
+## ⚖️ License & Credits
 
-Consolidated from permissive open-source repositories (MIT and Apache 2.0). Original copyrights and attributions are preserved in [CREDITS.md](./CREDITS.md).
+Consolidated from open-source repositories under MIT and Apache 2.0. Original copyrights are fully preserved in [CREDITS.md](./CREDITS.md).
+Licensed under the [MIT License](LICENSE) © 2026 Arlandaren.
