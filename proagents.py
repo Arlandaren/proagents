@@ -1,188 +1,240 @@
 #!/usr/bin/env python3
+"""proagents CLI — list, search, and install AI agent personas & workflows."""
 import os
 import sys
 import argparse
 import fnmatch
+import shutil
 
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 
+SKIP_DIRS = {".git", "assets", "templates", "marketing"}
+SKIP_FILES = {"README.md", "README.ru.md", "README.zh.md", "CREDITS.md"}
+
+# Target paths per IDE tool
+TOOL_TARGETS = {
+    "cursor":     (".cursor/rules", "mdc"),       # modern Cursor rules dir
+    "claude":     (os.path.expanduser("~/.claude/agents"), "md"),
+    "windsurf":   (".windsurf/rules", "md"),
+    "opencode":   (".opencode/agents", "md"),
+    "antigravity": (os.path.expanduser("~/.gemini/antigravity/skills"), "skill"),
+}
+
+
 def get_all_skills():
-    """Scan the repository for all markdown rules, personas, and workflows."""
     skills = []
-    for root, _, files in os.walk(REPO_ROOT):
-        # Exclude git, assets, templates folders
-        if any(p in root for p in [".git", "assets", "templates"]):
-            continue
+    for root, dirs, files in os.walk(REPO_ROOT):
+        # Prune unwanted dirs in-place so os.walk skips them
+        dirs[:] = [d for d in dirs if d not in SKIP_DIRS and not d.startswith(".")]
         for f in files:
-            if f.endswith(".md") and f not in ["README.md", "CREDITS.md"]:
-                full_path = os.path.join(root, f)
-                rel_path = os.path.relpath(full_path, REPO_ROOT)
-                parts = rel_path.split(os.sep)
-                
-                # Deduce category and subcategory
-                category = parts[0] if len(parts) > 0 else "unknown"
-                subcategory = parts[1] if len(parts) > 1 else "unknown"
-                name = os.path.splitext(f)[0]
-                
-                skills.append({
-                    "name": name,
-                    "filename": f,
-                    "rel_path": rel_path,
-                    "full_path": full_path,
-                    "category": category,
-                    "subcategory": subcategory
-                })
+            if not f.endswith(".md") or f in SKIP_FILES:
+                continue
+            full_path = os.path.join(root, f)
+            rel_path = os.path.relpath(full_path, REPO_ROOT)
+            parts = rel_path.split(os.sep)
+            skills.append({
+                "name":       os.path.splitext(f)[0],
+                "rel_path":   rel_path,
+                "full_path":  full_path,
+                "domain":     parts[0] if len(parts) > 0 else "root",
+                "subdomain":  parts[1] if len(parts) > 1 else "",
+            })
     return skills
+
 
 def cmd_list(args):
     skills = get_all_skills()
     if not args.domain:
-        # Group by category/subcategory
         stats = {}
         for s in skills:
-            cat_key = f"{s['category']}/{s['subcategory']}" if s['subcategory'] != "unknown" else s['category']
-            stats[cat_key] = stats.get(cat_key, 0) + 1
-        
-        print("=== proagents Domains ===")
-        for cat, count in sorted(stats.items()):
-            print(f"  {cat:<30} ({count} items)")
-        print("\nUse 'python proagents.py list <domain>' (e.g. 'personas/engineering') to view items.")
+            key = f"{s['domain']}/{s['subdomain']}" if s["subdomain"] else s["domain"]
+            stats[key] = stats.get(key, 0) + 1
+        print(f"proagents — {len(skills)} total\n")
+        for key, count in sorted(stats.items()):
+            print(f"  {key:<35} {count} items")
+        print("\nTip: python proagents.py list <domain>  (e.g. personas/engineering)")
     else:
         domain = args.domain.replace("/", os.sep)
-        matching = [s for s in skills if s['rel_path'].startswith(domain)]
+        matching = [s for s in skills if s["rel_path"].startswith(domain)]
         if not matching:
-            print(f"No skills found in domain '{args.domain}'")
+            print(f"No items found in '{args.domain}'")
             return
-        
-        print(f"=== proagents in '{args.domain}' ===")
-        for s in sorted(matching, key=lambda x: x['name']):
-            print(f"  {s['name']:<35} | {s['rel_path']}")
+        print(f"\n{args.domain}  ({len(matching)} items)\n")
+        for s in sorted(matching, key=lambda x: x["name"]):
+            print(f"  {s['name']}")
+
 
 def cmd_search(args):
     skills = get_all_skills()
     query = args.query.lower()
-    matching = []
-    
+    results = []
+
     for s in skills:
-        # Search by filename
-        if query in s['name'].lower() or query in s['subcategory'].lower():
-            matching.append((s, "Name Match"))
+        if query in s["name"].lower() or query in s["subdomain"].lower():
+            results.append((s, "name"))
             continue
-            
-        # Search content
+        if args.name_only:
+            continue
         try:
-            with open(s['full_path'], 'r', encoding='utf-8') as f:
-                content = f.read().lower()
-                if query in content:
-                    matching.append((s, "Content Match"))
-        except Exception:
+            with open(s["full_path"], encoding="utf-8", errors="ignore") as fh:
+                if query in fh.read().lower():
+                    results.append((s, "content"))
+        except OSError:
             pass
-            
-    if not matching:
-        print(f"No results found for query '{args.query}'")
+
+    if not results:
+        print(f"No results for '{args.query}'")
         return
-        
-    print(f"=== Search Results for '{args.query}' ({len(matching)} matches) ===")
-    for s, match_type in sorted(matching, key=lambda x: x[0]['name']):
-        print(f"  {s['name']:<35} | {s['rel_path']:<45} ({match_type})")
+
+    print(f"\nSearch: '{args.query}'  ({len(results)} matches)\n")
+    for s, match_type in sorted(results, key=lambda x: x[0]["name"]):
+        tag = "  " if match_type == "name" else "~content"
+        print(f"  {s['name']:<40} {s['rel_path']}  [{tag}]")
+
+
+def _find_skill(name, skills):
+    """Return matching skill or None. Prints disambiguation if multiple."""
+    # Exact match first
+    exact = [s for s in skills if s["name"] == name]
+    if len(exact) == 1:
+        return exact[0]
+
+    # Substring fallback
+    fuzzy = [s for s in skills if fnmatch.fnmatch(s["name"], f"*{name}*")]
+    if len(fuzzy) == 1:
+        return fuzzy[0]
+    if len(fuzzy) > 1:
+        print(f"Multiple matches for '{name}' — pick one:\n")
+        for i, m in enumerate(fuzzy, 1):
+            print(f"  {i})  {m['rel_path']}")
+        print()
+        choice = input("Enter number: ").strip()
+        if choice.isdigit() and 1 <= int(choice) <= len(fuzzy):
+            return fuzzy[int(choice) - 1]
+        print("Aborted.")
+        sys.exit(1)
+    return None
+
 
 def cmd_install(args):
     skills = get_all_skills()
-    # Find matching skill
-    matches = [s for s in skills if s['name'] == args.name or s['filename'] == args.name]
-    
-    if not matches:
-        # Try fuzzy match
-        matches = [s for s in skills if fnmatch.fnmatch(s['name'], f"*{args.name}*")]
-        
-    if not matches:
-        print(f"Error: Skill '{args.name}' not found.")
+    skill = _find_skill(args.name, skills)
+    if skill is None:
+        print(f"Skill '{args.name}' not found. Try: python proagents.py search {args.name}")
         sys.exit(1)
-        
-    if len(matches) > 1:
-        print("Multiple matches found. Please specify:")
-        for m in matches:
-            print(f"  {m['rel_path']}")
-        sys.exit(1)
-        
-    skill = matches[0]
-    
-    # Read prompt content
+
     try:
-        with open(skill['full_path'], 'r', encoding='utf-8') as f:
-            content = f.read()
-    except Exception as e:
-        print(f"Error reading file: {e}")
+        with open(skill["full_path"], encoding="utf-8") as fh:
+            content = fh.read()
+    except OSError as e:
+        print(f"Cannot read file: {e}")
         sys.exit(1)
-        
+
+    # --info: show first heading + description lines
     if args.info:
-        print(f"=== Info: {skill['name']} ===")
-        print(f"Path: {skill['rel_path']}")
-        # Extract preamble/first few lines
-        lines = content.split('\n')
-        preamble = []
-        for line in lines:
-            if line.startswith('#'):
-                break
-            preamble.append(line)
-        print('\n'.join(preamble).strip())
+        print(f"\n{skill['name']}\n{'─' * len(skill['name'])}")
+        print(f"Path: {skill['rel_path']}\n")
+        lines = content.splitlines()
+        for line in lines[:20]:
+            print(line)
         return
-        
+
+    # --stdout
     if args.stdout:
         print(content)
         return
-        
-    # Determine target file
-    target = args.target
+
+    # Determine write target
+    target_path = args.target
+
     if args.cursor:
-        target = ".cursorrules"
-        
-    if not target:
-        print(f"Error: Specify target file via '--target <file>' or '--cursor' or '--stdout'")
-        sys.exit(1)
-        
-    # Write to target
-    try:
-        # Check if folder exists
-        parent = os.path.dirname(target)
-        if parent:
-            os.makedirs(parent, exist_ok=True)
-            
-        with open(target, 'w', encoding='utf-8') as f:
-            f.write(content)
-        print(f"Successfully installed '{skill['name']}' to '{target}'!")
-    except Exception as e:
-        print(f"Error writing target file: {e}")
+        # Write as .mdc into modern .cursor/rules/ dir (Cursor 0.45+)
+        rules_dir = os.path.join(os.getcwd(), ".cursor", "rules")
+        os.makedirs(rules_dir, exist_ok=True)
+        target_path = os.path.join(rules_dir, f"{skill['name']}.mdc")
+
+    elif args.claude:
+        agents_dir = os.path.expanduser("~/.claude/agents")
+        os.makedirs(agents_dir, exist_ok=True)
+        target_path = os.path.join(agents_dir, f"{skill['name']}.md")
+
+    elif args.windsurf:
+        rules_dir = os.path.join(os.getcwd(), ".windsurf", "rules")
+        os.makedirs(rules_dir, exist_ok=True)
+        target_path = os.path.join(rules_dir, f"{skill['name']}.md")
+
+    elif args.opencode:
+        agents_dir = os.path.join(os.getcwd(), ".opencode", "agents")
+        os.makedirs(agents_dir, exist_ok=True)
+        target_path = os.path.join(agents_dir, f"{skill['name']}.md")
+
+    elif args.antigravity:
+        skill_dir = os.path.expanduser(f"~/.gemini/antigravity/skills/proagents-{skill['name']}")
+        os.makedirs(skill_dir, exist_ok=True)
+        target_path = os.path.join(skill_dir, "SKILL.md")
+
+    if not target_path:
+        print("Specify a destination: --cursor | --claude | --windsurf | --opencode | --antigravity | --target <path> | --stdout")
         sys.exit(1)
 
+    parent = os.path.dirname(target_path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+
+    with open(target_path, "w", encoding="utf-8") as fh:
+        fh.write(content)
+    print(f"✓  '{skill['name']}' → {target_path}")
+
+
 def main():
-    parser = argparse.ArgumentParser(description="proagents: CLI tool to list, search, and install AI personas/workflows.")
-    subparsers = parser.add_subparsers(dest="command", required=True)
-    
-    # List command
-    list_parser = subparsers.add_parser("list", help="List domains or skills in a domain.")
-    list_parser.add_argument("domain", nargs="?", help="Optional domain category (e.g. personas/engineering).")
-    
-    # Search command
-    search_parser = subparsers.add_parser("search", help="Search for rules/personas by keyword.")
-    search_parser.add_argument("query", help="Keyword to search for in filename and content.")
-    
-    # Install command
-    install_parser = subparsers.add_parser("install", help="Copy a prompt to a file/IDE config.")
-    install_parser.add_argument("name", help="Name of the persona/workflow to install.")
-    install_parser.add_argument("--target", help="Local file path to write the prompt to.")
-    install_parser.add_argument("--cursor", action="store_true", help="Install directly to local .cursorrules file.")
-    install_parser.add_argument("--stdout", action="store_true", help="Output content to standard output.")
-    install_parser.add_argument("--info", action="store_true", help="Display metadata and header info about the skill.")
-    
+    parser = argparse.ArgumentParser(
+        description="proagents — install AI agent personas & workflows into your IDE.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+examples:
+  python proagents.py list
+  python proagents.py list personas/engineering
+  python proagents.py search react
+  python proagents.py search react --name-only
+  python proagents.py install react-patterns --cursor
+  python proagents.py install code-reviewer --claude
+  python proagents.py install senior-fullstack --stdout >> CLAUDE.md
+  python proagents.py install ux-architect --windsurf
+  python proagents.py install animate --antigravity
+""",
+    )
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    # list
+    lp = sub.add_parser("list", help="List domains or items in a domain.")
+    lp.add_argument("domain", nargs="?", help="Domain path (e.g. personas/engineering)")
+
+    # search
+    sp = sub.add_parser("search", help="Search by keyword (name + content).")
+    sp.add_argument("query")
+    sp.add_argument("--name-only", action="store_true", help="Search filenames only (faster).")
+
+    # install
+    ip = sub.add_parser("install", help="Copy a prompt to your IDE configuration.")
+    ip.add_argument("name", help="Skill name (fuzzy match supported).")
+    ip.add_argument("--info",       action="store_true", help="Preview skill header.")
+    ip.add_argument("--stdout",     action="store_true", help="Print to stdout.")
+    ip.add_argument("--cursor",     action="store_true", help="→ .cursor/rules/<name>.mdc  (Cursor 0.45+)")
+    ip.add_argument("--claude",     action="store_true", help="→ ~/.claude/agents/<name>.md")
+    ip.add_argument("--windsurf",   action="store_true", help="→ .windsurf/rules/<name>.md")
+    ip.add_argument("--opencode",   action="store_true", help="→ .opencode/agents/<name>.md")
+    ip.add_argument("--antigravity",action="store_true", help="→ ~/.gemini/antigravity/skills/proagents-<name>/SKILL.md")
+    ip.add_argument("--target",     metavar="FILE",      help="Custom output path.")
+
     args = parser.parse_args()
-    
+
     if args.command == "list":
         cmd_list(args)
     elif args.command == "search":
         cmd_search(args)
     elif args.command == "install":
         cmd_install(args)
+
 
 if __name__ == "__main__":
     main()
